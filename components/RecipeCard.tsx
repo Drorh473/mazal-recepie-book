@@ -28,10 +28,18 @@ function saveFavorites(email: string, ids: string[]) {
 }
 
 // Splits "1. text 2. text 3. text" into [{num:1, step:"text"}, ...]
+// Strategy: split on whitespace that precedes a digit+dot+space pattern
 function parseSteps(text: string): Array<{ num: number; step: string }> {
-  const matches = [...text.matchAll(/(\d+)\.\s*([\s\S]*?)(?=\s+\d+\.|$)/g)]
-  if (matches.length < 2) return []
-  return matches.map((m) => ({ num: parseInt(m[1]), step: m[2].trim() }))
+  // Split at every point where whitespace is followed by a number and a dot+space
+  const parts = text.trim().split(/\s+(?=\d+\.\s)/)
+  if (parts.length < 2) return []
+  return parts
+    .map((p) => {
+      const m = p.match(/^(\d+)\.\s*([\s\S]+)$/)
+      if (!m) return null
+      return { num: parseInt(m[1]), step: m[2].trim() }
+    })
+    .filter((x): x is { num: number; step: string } => x !== null)
 }
 
 export default function RecipeCard({ recipe, isExpanded, onToggle }: Props) {
@@ -58,7 +66,7 @@ export default function RecipeCard({ recipe, isExpanded, onToggle }: Props) {
 
   return (
     <div
-      className={`bg-white border rounded-xl overflow-hidden transition-all duration-200 ${
+      className={`self-start bg-white border rounded-xl overflow-hidden transition-all duration-200 ${
         isExpanded
           ? 'border-[#c9703a]/30 shadow-md shadow-[#c9703a]/5'
           : 'border-[#e5ddd5] hover:shadow-md hover:shadow-black/5 hover:border-[#d9cfc5]'
