@@ -7,7 +7,24 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
       "Bash(curl -s http://localhost:3000/upload)",
       "Bash(curl -v http://localhost:3000/upload)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm run:*)",
+      "Bash(python scripts/test_app.py)",
+      "Bash(python -c \"import sys; sys.stdout.reconfigure\\(encoding=''utf-8''\\)\")",
+      "Bash(python -X utf8 scripts/test_app.py)",
+      "Bash(pandoc \"C:\\\\Users\\\\dror\\\\Downloads\\\\ספר גדול.docx\" -o /tmp/recipes.md)",
+      "Bash(python scripts/office/unpack.py \"C:\\\\Users\\\\dror\\\\Downloads\\\\ספר גדול.docx\" /tmp/recipes_unpacked/)",
+      "Bash(python -c \":*)",
+      "Bash(python -X utf8 scripts/import_recipes.py)",
+      "Bash(python -X utf8 -c \":*)",
+      "Bash(npm uninstall:*)",
+      "Bash(node -e \"const pkg = require\\(''./node_modules/@clerk/nextjs/package.json''\\); console.log\\(pkg.version\\)\")",
+      "Bash(node -e \"const m = require\\(''./node_modules/@clerk/nextjs''\\); console.log\\(Object.keys\\(m\\).filter\\(k => k.toLowerCase\\(\\).includes\\(''sign''\\) || k.toLowerCase\\(\\).includes\\(''user''\\)\\)\\)\")",
+      "Bash(grep -r export.*Signed node_modules/@clerk/nextjs/package.json)",
+      "Bash(node -e \":*)",
+      "Bash(find node_modules/@clerk/react/dist -name *.d.ts)",
+      "Bash(find node_modules/@clerk/shared/dist -name *.d.ts)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

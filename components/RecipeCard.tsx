@@ -1,4 +1,6 @@
 'use client'
+import { useState, useEffect } from 'react'
+import { useUser } from '@clerk/nextjs'
 import AudioPlayer from './AudioPlayer'
 import type { Recipe } from '@/lib/types'
 
@@ -8,7 +10,43 @@ interface Props {
   onToggle: () => void
 }
 
+function getFavKey(email: string) {
+  return `favorites_${email}`
+}
+
+function loadFavorites(email: string): string[] {
+  if (typeof window === 'undefined') return []
+  try {
+    return JSON.parse(localStorage.getItem(getFavKey(email)) || '[]')
+  } catch {
+    return []
+  }
+}
+
+function saveFavorites(email: string, ids: string[]) {
+  localStorage.setItem(getFavKey(email), JSON.stringify(ids))
+}
+
 export default function RecipeCard({ recipe, isExpanded, onToggle }: Props) {
+  const { user, isSignedIn } = useUser()
+  const [isFav, setIsFav] = useState(false)
+
+  useEffect(() => {
+    if (!isSignedIn || !user?.primaryEmailAddress?.emailAddress) return
+    const favs = loadFavorites(user.primaryEmailAddress.emailAddress)
+    setIsFav(favs.includes(recipe.id))
+  }, [isSignedIn, user, recipe.id])
+
+  const toggleFav = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!isSignedIn || !user?.primaryEmailAddress?.emailAddress) return
+    const email = user.primaryEmailAddress.emailAddress
+    const favs = loadFavorites(email)
+    const next = isFav ? favs.filter((id) => id !== recipe.id) : [...favs, recipe.id]
+    saveFavorites(email, next)
+    setIsFav(!isFav)
+  }
+
   return (
     <div
       className={`bg-white border border-[#e5ddd5] rounded-xl overflow-hidden transition-shadow ${
@@ -19,7 +57,7 @@ export default function RecipeCard({ recipe, isExpanded, onToggle }: Props) {
         onClick={onToggle}
         className="w-full text-right px-4 py-4 flex items-start justify-between gap-2 group"
       >
-        <div>
+        <div className="flex-1">
           <h3 className="font-semibold text-[#3d2c1e] text-sm leading-snug">
             {recipe.title}
           </h3>
@@ -27,9 +65,22 @@ export default function RecipeCard({ recipe, isExpanded, onToggle }: Props) {
             {recipe.category}
           </span>
         </div>
-        <span className="text-[#9e8474] text-xs mt-1 shrink-0 group-hover:text-[#3d2c1e] transition-colors">
-          {isExpanded ? '▲' : '▼'}
-        </span>
+        <div className="flex items-center gap-2 shrink-0 mt-1">
+          {isSignedIn && (
+            <button
+              onClick={toggleFav}
+              className={`text-lg leading-none transition-transform hover:scale-110 ${
+                isFav ? 'text-red-500' : 'text-[#d9cfc5] hover:text-red-400'
+              }`}
+              title={isFav ? 'הסר ממועדפים' : 'הוסף למועדפים'}
+            >
+              {isFav ? '♥' : '♡'}
+            </button>
+          )}
+          <span className="text-[#9e8474] text-xs group-hover:text-[#3d2c1e] transition-colors">
+            {isExpanded ? '▲' : '▼'}
+          </span>
+        </div>
       </button>
 
       {isExpanded ? (
