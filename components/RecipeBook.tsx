@@ -193,16 +193,19 @@ export default function RecipeBook({ recipes }: { recipes: Recipe[] }) {
               <div className="flex-1 h-px bg-[#e5ddd5]" />
               <span className="text-xs text-[#b5a59a] bg-[#ede8e3] px-2 py-0.5 rounded-full shrink-0">{catRecipes.length}</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
+            {/* CSS columns: each column is fully independent — expanding a card
+                never affects the height of cards in other columns */}
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-x-3">
               {catRecipes.map((recipe) => (
-                <RecipeCard
-                  key={recipe.id}
-                  recipe={recipe}
-                  isExpanded={expandedId === recipe.id}
-                  onToggle={() =>
-                    setExpandedId(expandedId === recipe.id ? null : recipe.id)
-                  }
-                />
+                <div key={recipe.id} className="break-inside-avoid mb-3">
+                  <RecipeCard
+                    recipe={recipe}
+                    isExpanded={expandedId === recipe.id}
+                    onToggle={() =>
+                      setExpandedId(expandedId === recipe.id ? null : recipe.id)
+                    }
+                  />
+                </div>
               ))}
             </div>
           </div>

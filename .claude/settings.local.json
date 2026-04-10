@@ -24,7 +24,12 @@
       "Bash(node -e \":*)",
       "Bash(find node_modules/@clerk/react/dist -name *.d.ts)",
       "Bash(find node_modules/@clerk/shared/dist -name *.d.ts)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(vercel link:*)",
+      "Bash(vercel integration:*)",
+      "Bash(vercel env:*)",
+      "Bash(vercel --prod)",
+      "Bash(xargs -I{} cat \"data/recipes/{}\")"
     ]
   }
 }
