@@ -157,7 +157,7 @@ export default function UploadPage() {
 
       {(stage === 'idle' || (stage === 'error' && !isRateLimit)) ? (
         <>
-          <UploadZone onFiles={processFiles} disabled={stage === 'processing'} />
+          <UploadZone onFiles={processFiles} disabled={false} />
           <div className="flex items-center gap-3 my-4">
             <div className="flex-1 h-px bg-[#e5ddd5]" />
             <span className="text-xs text-[#b5a59a]">או</span>
@@ -165,7 +165,7 @@ export default function UploadPage() {
           </div>
           <VoiceRecorder
             onRecordingComplete={processVoice}
-            disabled={stage === 'processing'}
+            disabled={false}
           />
         </>
       ) : null}

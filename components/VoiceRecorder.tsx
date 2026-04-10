@@ -11,7 +11,7 @@ export default function VoiceRecorder({ onRecordingComplete, disabled }: Props) 
   const [liveText, setLiveText] = useState('')
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
-  const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const recognitionRef = useRef<{ stop: () => void } | null>(null)
   const liveTextRef = useRef('')
 
   const startRecording = async () => {
@@ -27,16 +27,17 @@ export default function VoiceRecorder({ onRecordingComplete, disabled }: Props) 
     }
     mediaRecorder.start(100)
 
-    const SpeechRecognitionAPI =
-      (window as Window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition ||
-      (window as Window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any
+    const SpeechRecognitionAPI = w.SpeechRecognition || w.webkitSpeechRecognition
 
     if (SpeechRecognitionAPI) {
-      const recognition = new SpeechRecognitionAPI()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const recognition = new SpeechRecognitionAPI() as any
       recognition.lang = 'he-IL'
       recognition.continuous = true
       recognition.interimResults = true
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
+      recognition.onresult = (event: any) => {
         let transcript = ''
         for (let i = 0; i < event.results.length; i++) {
           transcript += event.results[i][0].transcript
