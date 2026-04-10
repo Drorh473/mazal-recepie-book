@@ -45,6 +45,8 @@ export default function RecipeCard({ recipe, isExpanded, onToggle }: Props) {
     const next = isFav ? favs.filter((id) => id !== recipe.id) : [...favs, recipe.id]
     saveFavorites(email, next)
     setIsFav(!isFav)
+    // notify RecipeBook to re-sync the favorites tab immediately
+    window.dispatchEvent(new CustomEvent('favoritesUpdated'))
   }
 
   return (
@@ -75,7 +77,7 @@ export default function RecipeCard({ recipe, isExpanded, onToggle }: Props) {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0 mt-0.5">
+        <div className="flex items-center gap-3 shrink-0 mt-0.5">
           {isSignedIn && (
             <button
               onClick={toggleFav}

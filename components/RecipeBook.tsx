@@ -4,30 +4,43 @@ import { useUser } from '@clerk/nextjs'
 import RecipeCard from './RecipeCard'
 import { CATEGORIES, type Recipe } from '@/lib/types'
 
+type SearchMode = 'name' | 'ingredients'
+
 export default function RecipeBook({ recipes }: { recipes: Recipe[] }) {
   const [activeCategory, setActiveCategory] = useState<string>('הכל')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [searchMode, setSearchMode] = useState<SearchMode>('name')
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const { user, isSignedIn } = useUser()
 
-  useEffect(() => {
+  function syncFavorites() {
     if (!isSignedIn || !user?.primaryEmailAddress?.emailAddress) return
     const key = `favorites_${user.primaryEmailAddress.emailAddress}`
     try {
       setFavoriteIds(JSON.parse(localStorage.getItem(key) || '[]'))
     } catch { /* noop */ }
+  }
+
+  // Load favorites when user signs in
+  useEffect(() => {
+    syncFavorites()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignedIn, user])
 
-  // Re-sync favorites when activeCategory changes to 'מועדפים'
+  // Re-sync favorites when switching to favorites tab
   useEffect(() => {
-    if (activeCategory !== 'מועדפים') return
-    if (!isSignedIn || !user?.primaryEmailAddress?.emailAddress) return
-    const key = `favorites_${user.primaryEmailAddress.emailAddress}`
-    try {
-      setFavoriteIds(JSON.parse(localStorage.getItem(key) || '[]'))
-    } catch { /* noop */ }
-  }, [activeCategory, isSignedIn, user])
+    if (activeCategory === 'מועדפים') syncFavorites()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCategory])
+
+  // Listen for heart-toggle events from RecipeCard — instant update without page refresh
+  useEffect(() => {
+    const handler = () => syncFavorites()
+    window.addEventListener('favoritesUpdated', handler)
+    return () => window.removeEventListener('favoritesUpdated', handler)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSignedIn, user])
 
   const filtered = useMemo(() => {
     let list = activeCategory === 'מועדפים'
@@ -38,14 +51,14 @@ export default function RecipeBook({ recipes }: { recipes: Recipe[] }) {
 
     if (search.trim()) {
       const q = search.trim().toLowerCase()
-      list = list.filter(
-        (r) =>
-          r.title.toLowerCase().includes(q) ||
-          r.ingredients.some((i) => i.toLowerCase().includes(q))
-      )
+      list = list.filter((r) => {
+        if (searchMode === 'name') return r.title.toLowerCase().includes(q)
+        if (searchMode === 'ingredients') return r.ingredients.some((i) => i.toLowerCase().includes(q))
+        return false
+      })
     }
     return list
-  }, [recipes, activeCategory, search])
+  }, [recipes, activeCategory, search, searchMode, favoriteIds])
 
   const grouped = CATEGORIES.reduce<Record<string, Recipe[]>>((acc, cat) => {
     const items = filtered.filter((r) => r.category === cat)
@@ -57,7 +70,6 @@ export default function RecipeBook({ recipes }: { recipes: Recipe[] }) {
     <>
       {/* Hero */}
       <div className="relative bg-[#3d2c1e] text-white text-center py-14 px-6 overflow-hidden">
-        {/* Subtle texture overlay */}
         <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #c9703a 0%, transparent 60%), radial-gradient(circle at 80% 20%, #c9703a 0%, transparent 50%)' }} />
         <div className="relative">
           <p className="text-[#c9703a] text-xs font-semibold tracking-[0.25em] uppercase mb-3">אוסף מתכונים משפחתי</p>
@@ -67,43 +79,61 @@ export default function RecipeBook({ recipes }: { recipes: Recipe[] }) {
           </h1>
           <p className="text-[#b5a59a] text-sm mb-6">{recipes.length} מתכונים</p>
 
-          {/* Search */}
-          <div className="max-w-sm mx-auto flex gap-2">
-            <div className="relative flex-1">
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">🔍</span>
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="חיפוש לפי שם או מצרך..."
-                className="w-full pr-9 pl-4 py-2.5 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#c9703a] focus:bg-white/15 transition-all"
-              />
-            </div>
-            {search && (
+          {/* Search with mode toggle */}
+          <div className="max-w-sm mx-auto space-y-2">
+            <div className="flex justify-center gap-1">
               <button
-                onClick={() => setSearch('')}
-                className="w-10 h-10 rounded-full bg-white/10 text-white/70 hover:bg-white/20 text-sm flex items-center justify-center transition-colors"
+                onClick={() => setSearchMode('name')}
+                className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all ${
+                  searchMode === 'name'
+                    ? 'bg-[#c9703a] text-white'
+                    : 'bg-white/10 text-white/50 hover:bg-white/20 hover:text-white/80'
+                }`}
               >
-                ✕
+                לפי שם
               </button>
-            )}
+              <button
+                onClick={() => setSearchMode('ingredients')}
+                className={`px-3 py-1 rounded-full text-[11px] font-semibold transition-all ${
+                  searchMode === 'ingredients'
+                    ? 'bg-[#c9703a] text-white'
+                    : 'bg-white/10 text-white/50 hover:bg-white/20 hover:text-white/80'
+                }`}
+              >
+                לפי מצרכים
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 text-sm">🔍</span>
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={searchMode === 'name' ? 'חיפוש לפי שם מתכון...' : 'חיפוש לפי מצרך...'}
+                  className="w-full pr-9 pl-4 py-2.5 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#c9703a] focus:bg-white/15 transition-all"
+                />
+              </div>
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  className="w-10 h-10 rounded-full bg-white/10 text-white/70 hover:bg-white/20 text-sm flex items-center justify-center transition-colors"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Print buttons */}
-          <div className="flex justify-center gap-3 mt-5">
+          {/* Download button */}
+          <div className="flex justify-center mt-5">
             <a
-              href="/print?voice=false"
-              target="_blank"
+              href="/recipe-book.docx"
+              download="ספר מתכונים מזל.docx"
               className="px-4 py-2 text-xs font-medium rounded-full bg-white/10 hover:bg-white/20 text-white/80 border border-white/20 transition-all hover:border-white/40 flex items-center gap-1.5"
             >
-              <span>🖨️</span> הדפסה
-            </a>
-            <a
-              href="/print?voice=true"
-              target="_blank"
-              className="px-4 py-2 text-xs font-medium rounded-full bg-[#c9703a]/20 hover:bg-[#c9703a]/30 text-[#e8a87c] border border-[#c9703a]/30 transition-all hover:border-[#c9703a]/50 flex items-center gap-1.5"
-            >
-              <span>🔊</span> הדפסה עם קול
+              <span>⬇️</span> הורדת ספר המתכונים
             </a>
           </div>
         </div>
