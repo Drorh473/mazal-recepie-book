@@ -193,7 +193,7 @@ export default function RecipeBook({ recipes }: { recipes: Recipe[] }) {
               <div className="flex-1 h-px bg-[#e5ddd5]" />
               <span className="text-xs text-[#b5a59a] bg-[#ede8e3] px-2 py-0.5 rounded-full shrink-0">{catRecipes.length}</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-start">
               {catRecipes.map((recipe) => (
                 <RecipeCard
                   key={recipe.id}

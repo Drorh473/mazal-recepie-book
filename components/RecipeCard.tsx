@@ -27,6 +27,13 @@ function saveFavorites(email: string, ids: string[]) {
   localStorage.setItem(getFavKey(email), JSON.stringify(ids))
 }
 
+// Splits "1. text 2. text 3. text" into [{num:1, step:"text"}, ...]
+function parseSteps(text: string): Array<{ num: number; step: string }> {
+  const matches = [...text.matchAll(/(\d+)\.\s*([\s\S]*?)(?=\s+\d+\.|$)/g)]
+  if (matches.length < 2) return []
+  return matches.map((m) => ({ num: parseInt(m[1]), step: m[2].trim() }))
+}
+
 export default function RecipeCard({ recipe, isExpanded, onToggle }: Props) {
   const { user, isSignedIn } = useUser()
   const [isFav, setIsFav] = useState(false)
@@ -119,9 +126,28 @@ export default function RecipeCard({ recipe, isExpanded, onToggle }: Props) {
               <p className="text-[10px] font-bold text-[#9e8474] uppercase tracking-widest mb-3">
                 הכנה
               </p>
-              <p className="text-sm text-[#3d2c1e] leading-relaxed whitespace-pre-line">
-                {recipe.instructions}
-              </p>
+              {(() => {
+                const steps = parseSteps(recipe.instructions)
+                if (steps.length > 0) {
+                  return (
+                    <ol className="space-y-3">
+                      {steps.map(({ num, step }) => (
+                        <li key={num} className="flex items-start gap-2.5">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-[#fff0eb] text-[#c9703a] text-[10px] font-bold flex items-center justify-center mt-0.5">
+                            {num}
+                          </span>
+                          <span className="text-sm text-[#3d2c1e] leading-relaxed">{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  )
+                }
+                return (
+                  <p className="text-sm text-[#3d2c1e] leading-relaxed whitespace-pre-line">
+                    {recipe.instructions}
+                  </p>
+                )
+              })()}
             </div>
           </div>
           {recipe.audioPath ? <AudioPlayer src={recipe.audioPath} /> : null}
