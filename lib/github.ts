@@ -46,7 +46,10 @@ export async function checkDuplicateTitle(title: string): Promise<boolean> {
     }
   )
 
-  if (!res.ok) return false // if we can't check, allow save
+  if (!res.ok) {
+    console.error(`[checkDuplicateTitle] Failed to list recipes: ${res.status}`, { repo, branch, hasToken: !!token })
+    return false
+  }
 
   const files = (await res.json()) as Array<{ name: string; download_url: string }>
   const normalizedTitle = title.trim().replace(/\s+/g, ' ')
@@ -103,6 +106,15 @@ export async function commitFile(params: {
 
   if (!res.ok) {
     const err = await res.json()
-    throw new Error(`GitHub API error: ${err.message}`)
+    const url = `https://api.github.com/repos/${repo}/contents/${params.path}`
+    console.error(`[commitFile] FAILED ${res.status} for ${url}`, {
+      repo,
+      branch,
+      path: params.path,
+      hasToken: !!token,
+      tokenPrefix: token?.substring(0, 8),
+      error: err,
+    })
+    throw new Error(`GitHub API error (${res.status}): ${err.message}`)
   }
 }

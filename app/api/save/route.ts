@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, id: slug })
   } catch (err: unknown) {
     const e = err as { message?: string }
-    console.error('[/api/save] Error saving recipe:', e?.message, err)
+    console.error('[/api/save] Error saving recipe:', e?.message, 'GITHUB_REPO:', process.env.GITHUB_REPO, 'HAS_TOKEN:', !!process.env.GITHUB_TOKEN, err)
     return NextResponse.json(
       { error: 'save_error', message: e?.message || 'שגיאה בשמירת המתכון' },
       { status: 500 }
