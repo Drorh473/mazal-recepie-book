@@ -115,6 +115,6 @@ export async function commitFile(params: {
       tokenPrefix: token?.substring(0, 8),
       error: err,
     })
-    throw new Error(`GitHub API error (${res.status}): ${err.message}`)
+    throw new Error(`GitHub API error (${res.status}): ${err.message} | repo=${repo} branch=${branch} path=${params.path} hasToken=${!!token} tokenPrefix=${token?.substring(0, 8)}`)
   }
 }
