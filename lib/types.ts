@@ -24,7 +24,7 @@ export interface ProcessedRecipe {
 }
 
 export interface ApiError {
-  error: 'rate_limit' | 'api_error' | 'invalid_input' | 'save_error'
+  error: 'rate_limit' | 'api_error' | 'invalid_input' | 'save_error' | 'duplicate'
   message: string
   retryAfter?: number
 }
