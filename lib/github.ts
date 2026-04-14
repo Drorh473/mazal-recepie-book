@@ -29,6 +29,46 @@ async function getFileSha(
   return data.sha as string
 }
 
+/** Check if a recipe with the same title already exists in GitHub */
+export async function checkDuplicateTitle(title: string): Promise<boolean> {
+  const repo = process.env.GITHUB_REPO!
+  const token = process.env.GITHUB_TOKEN!
+  const branch = process.env.GITHUB_BRANCH ?? 'main'
+
+  // List all files in data/recipes/
+  const res = await fetch(
+    `https://api.github.com/repos/${repo}/contents/data/recipes?ref=${branch}`,
+    {
+      headers: {
+        Authorization: `token ${token}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
+    }
+  )
+
+  if (!res.ok) return false // if we can't check, allow save
+
+  const files = (await res.json()) as Array<{ name: string; download_url: string }>
+  const normalizedTitle = title.trim().replace(/\s+/g, ' ')
+
+  // Check each recipe file for matching title
+  for (const file of files) {
+    if (!file.name.endsWith('.json')) continue
+    try {
+      const fileRes = await fetch(file.download_url)
+      if (!fileRes.ok) continue
+      const recipe = (await fileRes.json()) as { title?: string }
+      if (recipe.title && recipe.title.trim().replace(/\s+/g, ' ') === normalizedTitle) {
+        return true
+      }
+    } catch {
+      continue
+    }
+  }
+
+  return false
+}
+
 export async function commitFile(params: {
   path: string
   content: string // base64-encoded

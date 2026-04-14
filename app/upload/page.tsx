@@ -81,6 +81,7 @@ export default function UploadPage() {
   const save = async () => {
     if (!recipe) return
     setStage('saving')
+    setError(null)
 
     const res = await fetch('/api/save', {
       method: 'POST',
@@ -90,8 +91,10 @@ export default function UploadPage() {
     const data = await res.json()
 
     if (!res.ok) {
-      setError(data as ApiError)
-      setStage('error')
+      const apiErr = data as ApiError
+      setError(apiErr)
+      // For duplicates, go back to result stage so user can edit the title
+      setStage(apiErr.error === 'duplicate' ? 'result' : 'error')
       return
     }
 
@@ -106,6 +109,7 @@ export default function UploadPage() {
   }
 
   const isRateLimit = error?.error === 'rate_limit'
+  const isDuplicate = error?.error === 'duplicate'
 
   return (
     <div className="max-w-xl mx-auto px-4 py-10">
@@ -138,10 +142,10 @@ export default function UploadPage() {
         </div>
       ) : null}
 
-      {stage === 'error' && error ? (
-        <div className="bg-[#fff8f5] border border-[#f0cdb8] rounded-xl p-4 mb-6 text-sm text-[#8b3a1a]">
+      {(stage === 'error' || (stage === 'result' && error)) && error ? (
+        <div className={`border rounded-xl p-4 mb-6 text-sm ${isDuplicate ? 'bg-[#fff8e5] border-[#f0dfa0] text-[#7a6520]' : 'bg-[#fff8f5] border-[#f0cdb8] text-[#8b3a1a]'}`}>
           <p className="font-semibold mb-1">
-            {isRateLimit ? '⏳ Claude אינו זמין כרגע' : '⚠️ שגיאה'}
+            {isDuplicate ? '📋 מתכון כפול' : isRateLimit ? '⏳ Claude אינו זמין כרגע' : '⚠️ שגיאה'}
           </p>
           <p>{error.message}</p>
           {isRateLimit && retrySeconds > 0 ? (
@@ -149,7 +153,7 @@ export default function UploadPage() {
           ) : null}
           {!isRateLimit ? (
             <button onClick={reset} className="mt-2 text-xs underline">
-              נסי שוב
+              {isDuplicate ? 'חזרה להוספת מתכון' : 'נסי שוב'}
             </button>
           ) : null}
         </div>

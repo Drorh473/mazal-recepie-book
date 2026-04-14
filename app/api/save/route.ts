@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
-import { commitFile, generateSlug } from '@/lib/github'
+import { commitFile, generateSlug, checkDuplicateTitle } from '@/lib/github'
 import type { Recipe, ProcessedRecipe } from '@/lib/types'
 
 export async function POST(req: NextRequest) {
@@ -8,6 +8,15 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as {
       recipe: ProcessedRecipe
       audio?: string // base64 webm
+    }
+
+    // Check for duplicate recipe title
+    const isDuplicate = await checkDuplicateTitle(body.recipe.title)
+    if (isDuplicate) {
+      return NextResponse.json(
+        { error: 'duplicate', message: `המתכון "${body.recipe.title}" כבר קיים בספר` },
+        { status: 409 }
+      )
     }
 
     const slug = generateSlug(body.recipe.title)
