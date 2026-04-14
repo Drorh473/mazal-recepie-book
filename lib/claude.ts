@@ -3,6 +3,12 @@ import { CATEGORIES, type ProcessedRecipe } from './types'
 
 const client = new Anthropic()
 
+/** Strip markdown code fences (```json ... ```) that Claude sometimes adds */
+function extractJSON(raw: string): string {
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
+  return fenced ? fenced[1].trim() : raw.trim()
+}
+
 const SYSTEM_PROMPT = `אתה מחלץ מתכון מכרטיס מתכון כתוב ביד או מודפס בעברית.
 ענה אך ורק עם JSON תקני בפורמט הבא, ללא טקסט נוסף:
 {
@@ -65,7 +71,7 @@ export async function processImages(
   })
   const text =
     response.content[0].type === 'text' ? response.content[0].text : ''
-  return JSON.parse(text) as ProcessedRecipe
+  return JSON.parse(extractJSON(text)) as ProcessedRecipe
 }
 
 export async function processTranscription(
@@ -79,5 +85,5 @@ export async function processTranscription(
   })
   const text =
     response.content[0].type === 'text' ? response.content[0].text : ''
-  return JSON.parse(text) as ProcessedRecipe
+  return JSON.parse(extractJSON(text)) as ProcessedRecipe
 }
